@@ -1,16 +1,18 @@
 
 import sys
-sys.path.append('/home/chenxp/caffe/python')
+import os
 import caffe
-
 import ipdb
 import cv2
 import numpy as np
 import skimage
 
-deploy = '/home/chenxp/caffe/models/vgg/VGG_ILSVRC_16_layers_deploy.prototxt'
-model = '/home/chenxp/caffe/models/vgg/VGG_ILSVRC_16_layers.caffemodel'
-mean = '/home/chenxp/caffe/python/caffe/imagenet/ilsvrc_2012_mean.npy'
+caffe_root = '/data2/wqian/caffe-master/'
+sys.path.append(os.path.join(caffe_root, 'python'))
+
+deploy = os.path.join(caffe_root, 'models/VGG/', 'VGG_ILSVRC_16_layers_deploy.prototxt')
+model = os.path.join(caffe_root, 'models/VGG/', 'VGG_ILSVRC_16_layers.caffemodel')
+mean = os.path.join(caffe_root, 'python/caffe/imagenet/ilsvrc_2012_mean.npy')
 
 class CNN(object):
 

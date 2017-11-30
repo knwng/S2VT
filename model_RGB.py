@@ -22,7 +22,7 @@ class Video_Caption_Generator():
         self.n_video_lstm_step=n_video_lstm_step
         self.n_caption_lstm_step=n_caption_lstm_step
 
-        with tf.device("/cpu:0"):
+        with tf.device("/gpu:0"):
             self.Wemb = tf.Variable(tf.random_uniform([n_words, dim_hidden], -0.1, 0.1), name='Wemb')
         #self.bemb = tf.Variable(tf.zeros([dim_hidden]), name='bemb')
 
@@ -72,7 +72,7 @@ class Video_Caption_Generator():
             #if i == 0:
             #    current_embed = tf.zeros([self.batch_size, self.dim_hidden])
             #else:
-            with tf.device("/cpu:0"):
+            with tf.device("/gpu:0"):
                 current_embed = tf.nn.embedding_lookup(self.Wemb, caption[:, i])
 
             tf.get_variable_scope().reuse_variables()
@@ -130,7 +130,7 @@ class Video_Caption_Generator():
             tf.get_variable_scope().reuse_variables()
 
             if i == 0:
-                with tf.device('/cpu:0'):
+                with tf.device('/gpu:0'):
                     current_embed = tf.nn.embedding_lookup(self.Wemb, tf.ones([1], dtype=tf.int64))
 
             with tf.variable_scope("LSTM1"):
@@ -144,7 +144,7 @@ class Video_Caption_Generator():
             generated_words.append(max_prob_index)
             probs.append(logit_words)
 
-            with tf.device("/cpu:0"):
+            with tf.device("/gpu:0"):
                 current_embed = tf.nn.embedding_lookup(self.Wemb, max_prob_index)
                 current_embed = tf.expand_dims(current_embed, 0)
 
@@ -156,7 +156,7 @@ class Video_Caption_Generator():
 #=====================================================================================
 # Global Parameters
 #=====================================================================================
-video_path = '/home/chenxp/data/msvd'
+video_path = './data/YouTubeClips'
 
 video_train_feat_path = './rgb_train_features'
 video_test_feat_path = './rgb_test_features'

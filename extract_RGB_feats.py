@@ -35,10 +35,11 @@ def preprocess_frame(image, target_height=224, target_width=224):
 
 def main():
     num_frames = 80
-    vgg_model = '/home/chenxp/caffe/models/vgg/VGG_ILSVRC_16_layers.caffemodel'
-    vgg_deploy = '/home/chenxp/caffe/models/vgg/VGG_ILSVRC_16_layers_deploy.prototxt'
-    video_path = '/home/chenxp/data/msvd'
-    video_save_path = './rgb_feats'
+    caffe_root = '/data2/wqian/caffe-master/'
+    vgg_model = os.path.join(caffe_root, 'models/VGG/VGG_ILSVRC_16_layers.caffemodel')
+    vgg_deploy = os.path.join(caffe_root, 'models/VGG/VGG_ILSVRC_16_layers_deploy.prototxt')
+    video_path = './data/YouTubeClips'
+    video_save_path = './data/rgb_feats'
     videos = os.listdir(video_path)
     videos = filter(lambda x: x.endswith('avi'), videos)
 
