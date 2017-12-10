@@ -1,6 +1,7 @@
 import os,sys,csv
 import numpy as np
 from collections import defaultdict
+import random
 
 datafile = file('video_corpus.csv')
 datareader = csv.reader(datafile)
@@ -29,9 +30,13 @@ testdir = 'YouTubeClips_test'
 # os.system('mkdir '+testdir)
 
 i = 0
-for video in datadict.keys():
+random.seed()
+shuffled_idx = range(len(datadict.keys()))
+random.shuffle(shuffled_idx)
+for j in range(len(shuffled_idx)):
     if i <= splitpoint:
         # mv to train set
+        video = datadict.keys()[shuffled_idx[j]]
         if os.path.exists(os.path.join('YouTubeClips', video)):
             os.system('cp '+os.path.join('YouTubeClips', video)+' '+traindir)
             trainwriter.writerows(datadict[video])
@@ -41,12 +46,14 @@ for video in datadict.keys():
         i += 1
     else:
         # mv to test set
+        video = datadict.keys()[shuffled_idx[j]]
         if os.path.exists(os.path.join('YouTubeClips', video)):
             os.system('cp '+os.path.join('YouTubeClips', video)+' '+testdir)
             testwriter.writerows(datadict[video])
             print 'cp '+video+' to test folder and add annotations'
         else:
             print 'test file '+video+' not exist'
+        i += 1
 
 print 'finish processing'
 datafile.close()

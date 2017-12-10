@@ -10,7 +10,11 @@ import ipdb
 import time
 import cv2
 from keras.preprocessing import sequence
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
+device_num = "/gpu:1"
 
 class Video_Caption_Generator():
     def __init__(self, dim_image, n_words, dim_hidden, batch_size, n_lstm_steps, n_video_lstm_step, n_caption_lstm_step, bias_init_vector=None):
@@ -22,14 +26,13 @@ class Video_Caption_Generator():
         self.n_video_lstm_step=n_video_lstm_step
         self.n_caption_lstm_step=n_caption_lstm_step
 
-        with tf.device("/gpu:0"):
+        with tf.device(device_num):
             self.Wemb = tf.Variable(tf.random_uniform([n_words, dim_hidden], -0.1, 0.1), name='Wemb')
-            #self.bemb = tf.Variable(tf.zeros([dim_hidden]), name='bemb')
+            # self.Wemb = tf.get_variable(initializer=tf.random_uniform([n_words, dim_hidden], -0.1, 0.1), name='Wemb')
+        #self.bemb = tf.Variable(tf.zeros([dim_hidden]), name='bemb')
 
-        with tf.variable_scope("LSTM1"):
-            self.lstm1 = tf.nn.rnn_cell.BasicLSTMCell(dim_hidden, state_is_tuple=False)
-        with tf.variable_scope("LSTM1"):
-            self.lstm2 = tf.nn.rnn_cell.BasicLSTMCell(dim_hidden, state_is_tuple=False)
+        self.lstm1 = tf.nn.rnn_cell.BasicLSTMCell(dim_hidden, state_is_tuple=False)
+        self.lstm2 = tf.nn.rnn_cell.BasicLSTMCell(dim_hidden, state_is_tuple=False)
 
         self.encode_image_W = tf.Variable( tf.random_uniform([dim_image, dim_hidden], -0.1, 0.1), name='encode_image_W')
         self.encode_image_b = tf.Variable( tf.zeros([dim_hidden]), name='encode_image_b')
@@ -61,33 +64,34 @@ class Video_Caption_Generator():
         ##############################  Encoding Stage ##################################
         for i in range(0, self.n_video_lstm_step):
             if i > 0:
-                tf.get_variable_scope().reuse_variables()
+                # tf.get_variable_scope().reuse_variables()
+                pass
 
-            with tf.variable_scope("LSTM1"):
+            with tf.variable_scope("LSTM1", reuse=tf.AUTO_REUSE):
                 output1, state1 = self.lstm1(image_emb[:,i,:], state1)
 
-            with tf.variable_scope("LSTM2"):
-                output2, state2 = self.lstm2(tf.concat([padding, output1], 1), state2)
+            with tf.variable_scope("LSTM2", reuse=tf.AUTO_REUSE):
+                output2, state2 = self.lstm2(tf.concat(axis=1, values=[padding, output1]), state2)
 
         ############################# Decoding Stage ######################################
         for i in range(0, self.n_caption_lstm_step): ## Phase 2 => only generate captions
             #if i == 0:
             #    current_embed = tf.zeros([self.batch_size, self.dim_hidden])
             #else:
-            with tf.device("/gpu:0"):
+            with tf.device(device_num):
                 current_embed = tf.nn.embedding_lookup(self.Wemb, caption[:, i])
 
-            tf.get_variable_scope().reuse_variables()
+            # tf.get_variable_scope().reuse_variables()
 
-            with tf.variable_scope("LSTM1"):
+            with tf.variable_scope("LSTM1", reuse=tf.AUTO_REUSE):
                 output1, state1 = self.lstm1(padding, state1)
 
-            with tf.variable_scope("LSTM2"):
-                output2, state2 = self.lstm2(tf.concat([current_embed, output1], 1), state2)
+            with tf.variable_scope("LSTM2", reuse=tf.AUTO_REUSE):
+                output2, state2 = self.lstm2(tf.concat(axis=1, values=[current_embed, output1]), state2)
 
             labels = tf.expand_dims(caption[:, i+1], 1)
             indices = tf.expand_dims(tf.range(0, self.batch_size, 1), 1)
-            concated = tf.concat([indices, labels], 1)
+            concated = tf.concat(axis=1, values=[indices, labels])
             onehot_labels = tf.sparse_to_dense(concated, tf.stack([self.batch_size, self.n_words]), 1.0, 0.0)
 
             logit_words = tf.nn.xw_plus_b(output2, self.embed_word_W, self.embed_word_b)
@@ -120,33 +124,34 @@ class Video_Caption_Generator():
 
         for i in range(0, self.n_video_lstm_step):
             if i > 0:
-                tf.get_variable_scope().reuse_variables()
+                # tf.get_variable_scope().reuse_variables()
+                pass
 
-            with tf.variable_scope("LSTM1"):
+            with tf.variable_scope("LSTM1", reuse=tf.AUTO_REUSE):
                 output1, state1 = self.lstm1(image_emb[:, i, :], state1)
 
-            with tf.variable_scope("LSTM2"):
-                output2, state2 = self.lstm2(tf.concat([padding, output1], 1), state2)
+            with tf.variable_scope("LSTM2", reuse=tf.AUTO_REUSE):
+                output2, state2 = self.lstm2(tf.concat(axis=1, values=[padding, output1]), state2)
 
         for i in range(0, self.n_caption_lstm_step):
-            tf.get_variable_scope().reuse_variables()
+            # tf.get_variable_scope().reuse_variables()
 
             if i == 0:
-                with tf.device('/gpu:0'):
+                with tf.device(device_num):
                     current_embed = tf.nn.embedding_lookup(self.Wemb, tf.ones([1], dtype=tf.int64))
 
-            with tf.variable_scope("LSTM1"):
+            with tf.variable_scope("LSTM1", reuse=tf.AUTO_REUSE):
                 output1, state1 = self.lstm1(padding, state1)
 
-            with tf.variable_scope("LSTM2"):
-                output2, state2 = self.lstm2(tf.concat([current_embed, output1], 1), state2)
+            with tf.variable_scope("LSTM2", reuse=tf.AUTO_REUSE):
+                output2, state2 = self.lstm2(tf.concat(axis=1, values=[current_embed, output1]), state2)
 
             logit_words = tf.nn.xw_plus_b( output2, self.embed_word_W, self.embed_word_b)
             max_prob_index = tf.argmax(logit_words, 1)[0]
             generated_words.append(max_prob_index)
             probs.append(logit_words)
 
-            with tf.device("/gpu:0"):
+            with tf.device(device_num):
                 current_embed = tf.nn.embedding_lookup(self.Wemb, max_prob_index)
                 current_embed = tf.expand_dims(current_embed, 0)
 
@@ -282,10 +287,10 @@ def train():
             bias_init_vector=bias_init_vector)
 
     tf_loss, tf_video, tf_video_mask, tf_caption, tf_caption_mask, tf_probs = model.build_model()
-    # sess = tf.InteractiveSession()
-    sess = tf.Session()
+    sess = tf.InteractiveSession()
+    # sess = tf.Session()
     
-    # my tensorflow version is 1.2.1, I write the saver with version 1.0
+    # my tensorflow version is 0.12.1, I write the saver with version 1.0
     saver = tf.train.Saver(max_to_keep=100, write_version=1)
     train_op = tf.train.AdamOptimizer(learning_rate).minimize(tf_loss)
     tf.global_variables_initializer().run()
@@ -304,7 +309,8 @@ def train():
         np.random.shuffle(index)
         train_data = train_data.ix[index]
 
-        current_train_data = train_data.groupby('video_path').apply(lambda x: x.irow(np.random.choice(len(x))))
+        # current_train_data = train_data.groupby('video_path').apply(lambda x: x.irow(np.random.choice(len(x))))
+        current_train_data = train_data.groupby('video_path').apply(lambda x: x.iloc[np.random.choice(len(x))])
         current_train_data = current_train_data.reset_index(drop=True)
 
         for start, end in zip(
@@ -396,7 +402,7 @@ def train():
 
     loss_fd.close()
 
-def test(model_path='./models/model-100'):
+def test(model_path='./models/model-990'):
     test_data = get_video_test_data(video_test_data_path, video_test_feat_path)
     test_videos = test_data['video_path'].unique()
 
@@ -416,8 +422,8 @@ def test(model_path='./models/model-100'):
 
     video_tf, video_mask_tf, caption_tf, probs_tf, last_embed_tf = model.build_generator()
 
-    # sess = tf.InteractiveSession()
-    sess = tf.Session()
+    sess = tf.InteractiveSession()
+    # sess = tf.Session()
 
     saver = tf.train.Saver()
     saver.restore(sess, model_path)
@@ -425,10 +431,13 @@ def test(model_path='./models/model-100'):
     test_output_txt_fd = open('S2VT_results.txt', 'w')
     for idx, video_feat_path in enumerate(test_videos):
         print idx, video_feat_path
+        
+        print np.load(video_feat_path).shape
 
         video_feat = np.load(video_feat_path)[None,...]
         #video_feat = np.load(video_feat_path)
         #video_mask = np.ones((video_feat.shape[0], video_feat.shape[1]))
+        print 'video_feat shape: ', video_feat.shape
         if video_feat.shape[1] == n_frame_step:
             video_mask = np.ones((video_feat.shape[0], video_feat.shape[1]))
         else:
@@ -450,4 +459,5 @@ def test(model_path='./models/model-100'):
         print generated_sentence,'\n'
         test_output_txt_fd.write(video_feat_path + '\n')
         test_output_txt_fd.write(generated_sentence + '\n\n')
+    test_output_txt_fd.close()
 

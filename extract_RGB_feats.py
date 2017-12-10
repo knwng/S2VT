@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
 import cv2
@@ -38,8 +39,8 @@ def main():
     caffe_root = '/data2/wqian/caffe-master/'
     vgg_model = os.path.join(caffe_root, 'models/VGG/VGG_ILSVRC_16_layers.caffemodel')
     vgg_deploy = os.path.join(caffe_root, 'models/VGG/VGG_ILSVRC_16_layers_deploy.prototxt')
-    video_path = './data/YouTubeClips_test'
-    video_save_path = './data/rgb_feats_test'
+    video_path = './data/YouTubeClips_train'
+    video_save_path = './data/rgb_feats_train'
     videos = os.listdir(video_path)
     videos = filter(lambda x: x.endswith('avi'), videos)
 

@@ -1,11 +1,15 @@
 # dataset
-./data/*
-./data/
 *.avi
 *.csv
 *.npy
 *.tar
 *.txt
+models/
+models/*
+model-*
+*.png
+*.sw[pon]
+
 
 
 
