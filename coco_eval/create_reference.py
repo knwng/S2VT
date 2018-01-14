@@ -7,7 +7,7 @@ import pandas as pd
 import cPickle as pickle
 
 
-video_src_dir = "../data/video_corpus.csv"
+video_src_dir = "../data/video_corpus_test.csv"
 
 video_data = pd.read_csv(video_src_dir, sep=',')
 video_data = video_data[video_data['Language'] == 'English']

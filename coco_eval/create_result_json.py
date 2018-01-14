@@ -5,9 +5,17 @@ import glob
 import numpy as np
 
 import cPickle
+import argparse
+
+ap = argparse.ArgumentParser()
+ap.add_argument('--input_txt')
+ap.add_argument('--output_json', default='generation.json')
+args = ap.parse_args()
 
 #  change the output file
-output_txt_dir = "../S2VT_results.txt"
+# output_txt_dir = "../models/2-layer_RNN/S2VT_results.txt"
+json_dir = args.output_json
+output_txt_dir = args.input_txt
 output = open(output_txt_dir).read().splitlines()
 
 num_all_output = len(output)
@@ -36,7 +44,7 @@ for key in map_videoID:
     val = map_videoID[key]
     map_videoID_reverse[val] = key
 
-json_fd = open('generation.json', 'w')
+json_fd = open(json_dir, 'w')
 json_fd.write('[')
 for idx, item in enumerate(avi_names):
     if idx != len(avi_names)-1:

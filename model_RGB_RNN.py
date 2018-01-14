@@ -18,7 +18,7 @@ import argparse
 config = tf.ConfigProto() 
 config.gpu_options.allow_growth = True 
 device_num = "/gpu:0"
-model_name = "2-layer_RNN"
+model_name = "2-layer_RNN_5000_epochs"
 if not os.path.isdir(os.path.join('./data', model_name)):
     os.system("mkdir -p "+os.path.join('./data', model_name))
 if not os.path.isdir(os.path.join('./models', model_name)):
@@ -168,6 +168,8 @@ class Video_Caption_Generator():
 
             embeds.append(current_embed)
 
+        print('get trainable variables from model: {}'.format(tf.trainable_variables()))
+
         return video, video_mask, generated_words, probs, embeds
 
 
@@ -194,7 +196,7 @@ n_video_rnn_step = 80
 n_caption_rnn_step = 20
 n_frame_step = 80
 
-n_epochs = 1000
+n_epochs = 5001
 batch_size = 50
 learning_rate = 0.0001
 
@@ -302,7 +304,8 @@ def train():
     # sess = tf.Session()
     
     # my tensorflow version is 0.12.1, I write the saver with version 1.0
-    saver = tf.train.Saver(max_to_keep=100, write_version=1)
+    # saver = tf.train.Saver(max_to_keep=500, write_version=1)
+    saver = tf.train.Saver(max_to_keep=500)
     train_op = tf.train.AdamOptimizer(learning_rate).minimize(tf_loss)
     tf.global_variables_initializer().run()
 
@@ -407,7 +410,7 @@ def train():
         plt.grid(True)
         plt.savefig(os.path.join(plt_save_dir, plt_save_img_name))
 
-        if np.mod(epoch, 10) == 0:
+        if np.mod(epoch, 20) == 0:
             print "Epoch ", epoch, " is done. Saving the model ..."
             saver.save(sess, os.path.join(model_path, model_name, 'model'), global_step=epoch)
 

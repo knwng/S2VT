@@ -3,9 +3,14 @@
 import os
 from pycocotools.coco import COCO
 from pycocoevalcap.eval import COCOEvalCap
+import argparse
+
+ap = argparse.ArgumentParser()
+ap.add_argument('--resFile')
+args = ap.parse_args()
 
 annFile = 'reference.json'
-resFile = 'generation.json'
+resFile = args.resFile
 
 # create coco object and cocoRes object
 coco = COCO(annFile)
